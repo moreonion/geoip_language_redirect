@@ -1,54 +1,58 @@
 <?php
 
-class CountrySelectorRedirect {
-  protected static $active = FALSE;
-  protected static $original_cache = FALSE;
+class CountrySelectorController {
+  protected static $instance = NULL;
 
-  protected $path;
-  protected $country;
-  protected $links;
-  protected $mapping;
-  protected $defaultLanguage;
-  protected $language;
-
-  public static function initInstance($obj = NULL) {
-    if (!$obj) {
-      $obj = new CountrySelectorRedirect();
-    }
-    self::$instance = $obj;
-  }
+  protected $languageSource = NULL;
+  protected $originalCache = FALSE;
 
   public static function hook_boot() {
     if (php_sapi_name() === 'cli') { return; }
-    $base_url = $GLOBALS['base_url'];
-    $came_from_outside = substr($_SERVER['HTTP_REFERER'], 0, strlen($base_url)) != $base_url;
-    if ($came_from_outside && !isset($_COOKIE['country_selector'])) {
-      setcookie('country_selector', '1', 0, $GLOBALS['base_path']);
-      self::$active = TRUE;
-      if (self::$original_cache = variable_get('cache')) {
-        $GLOBALS['conf']['cache'] = FALSE;
-      }
+
+    $instance = new CountrySelectorController(
+      isset($_GET['country-selector-select']) ? $_GET['country-selector-select'] : NULL,
+      $GLOBALS['base_url'],
+      $_SERVER['HTTP_REFERER'],
+      isset($_COOKIE['country_selector'])
+    );
+    if ($instance->isActive()) {
+      self::$instance = $instance;
     }
   }
 
-  public static function fromDefaults() {
-    $path = current_path();
-    // use @: see https://bugs.php.net/bug.php?id=59753
-    $country = @geoip_country_code_by_name(ip_address());
-    $links = translation_path_get_translations($path);
-    $mapping = variable_get('country_selector_mapping', array());
-    $language = language_default()->language;
-    return new CountrySelectorRedirect($path, $links, $mapping, $country, $language);
-  }
-  
-  /**
-   * Redirect if applicable and optionally send answer from cache.
-   */
   public static function hook_init() {
-    if (!self::$active) { return; }
-    self::fromDefaults()->doRedirect();
-    if (self::$original_cache) {
-      $GLOBALS['conf']['cache'] = self::$original_cache;
+    if (isset(self::$instance)) {
+      self::$instance->redirect(current_path());
+      self::$instance->serveFromCache();
+    };
+  }
+
+  public function __construct($get, $base_url, $referer, $cookie) {
+    $came_from_outside = substr($_SERVER['HTTP_REFERER'], 0, strlen($base_url)) != $base_url;
+    if ($came_from_outside && !$cookie) {
+      $this->languageSource = CountrySelectorGeoIp::fromDefaults();
+      $this->setCookie();
+      $this->deactivateCache();
+    }
+  }
+
+  public function isActive() {
+    return isset($this->languageSource);
+  }
+
+  protected function setCookie() {
+    setcookie('country_selector', '1', 0, $GLOBALS['base_path']);
+  }
+
+  protected function deactivateCache() {
+    if ($this->originalCache = variable_get('cache')) {
+      $GLOBALS['conf']['cache'] = FALSE;
+    }
+  }
+
+  protected function serveFromCache() {
+    if ($this->$originalCache) {
+      $GLOBALS['conf']['cache'] = $this->originalCache;
       $cache = drupal_page_get_cache();
       if (is_object($cache)) {
         header('X-Drupal-Cache: HIT');
@@ -62,6 +66,29 @@ class CountrySelectorRedirect {
     }
   }
 
+  public function redirect($path) {
+    $langCode = $this->languageSource->selectLanguage();
+    _country_selector_goto($langCode, $path);
+  }
+
+}
+
+class CountrySelectorGeoIp {
+  protected $path;
+  protected $country;
+  protected $links;
+  protected $mapping;
+  protected $defaultLanguage;
+  protected $language;
+
+  public static function fromDefaults() {
+    // use @: see https://bugs.php.net/bug.php?id=59753
+    $country = @geoip_country_code_by_name(ip_address());
+    $mapping = variable_get('country_selector_mapping', array());
+    $language = language_default()->language;
+    return new CountrySelectorRedirect($mapping, $country, $language);
+  }
+  
   public function selectLanguage(){
     $country = &$this->country;
     $GLOBALS['country_selector_country'] = $country;
@@ -72,38 +99,8 @@ class CountrySelectorRedirect {
       return $this->defaultLanguage;
     }
   }
-  /**
-   * Helper function that get's the path to redirect to.
-   */
-  public function selectPath() {
-    $links = &$this->links;
-    $this->language = $language = $this->selectLanguage();
-    if (isset($links[$language])) {
-      return $links[$language];
-    } elseif (isset($links[$this->defaultLanguage])) {
-      return $links[$this->defaultLanguage];
-    } else {
-      return $this->path;
-    }
-  }
-  
-  public function doRedirect() {
-    $path = &$this->path;
-    // only act on node/… paths.
-    if (substr($path, 0, 5) != 'node/') {
-      return;
-    }
 
-    $languages = language_list();
-    $link = $this->selectPath();
-    if ($link != $path) {
-      drupal_goto($link, array('language' => $languages[$this->language]), 303);
-    }
-  }
-
-  public function __construct($path, $links, $mapping, $country, $default_language) {
-    $this->path = $path;
-    $this->links = $links;
+  public function __construct($mapping, $country, $default_language) {
     $this->mapping = $mapping;
     $this->country = $country;
     $this->defaultLanguage = $default_language;
@@ -117,7 +114,7 @@ class CountrySelectorRedirect {
  * disables page-cache if so.
  */
 function country_selector_boot() {
-  CountrySelectorRedirect::hook_boot();
+  CountrySelectorController::hook_boot();
 }
 
 /**
@@ -126,64 +123,18 @@ function country_selector_boot() {
  * Do redirect if needed.
  */
 function country_selector_init() {
-  CountrySelectorRedirect::hook_init();
+  CountrySelectorController::hook_init();
 }
 
-function country_selector_block_info() {
-  $blocks = array();
-  $blocks['country_selector'] = array(
-    'info' => t('Country selector'),
-    'region' => 'header',
-    );
-    return $blocks;
-}
-
-function country_selector_block_view() {
-  $path = current_path();
-  if (substr($path, 0, 5) != 'node/') {
-    return;
+function _country_selector_goto($lang, $path = NULL) {
+  $path = isset($path) ? $path : current_path();
+  $links = language_negotiation_get_switch_links('language', $path)->links;
+  if (!isset($links[$lang]) || !isset($links[$lang]['href'])) {
+    $lang = language_default()->language;
   }
-
-  return array(
-    'subject' => t('Country selector'),
-    'content' => drupal_get_form('country_selector_form'),
-  );
-}
-
-function country_selector_form($form, &$form_state) {
-  $values = array();
-  $llist = language_list();
-  $current = current_path();
-  $links = translation_path_get_translations($current);
-  foreach ($llist as $code => $language) {
-    $link = isset($links[$language->language]) ? $links[$language->language] : $current;
-    $path = url($link, array('language' => $language));
-    $values[$path] = $language->native;
+  if (isset($links[$lang])) {
+    $link = &$links[$lang];
+    $path = isset($link['href']) ? $link['href'] : $path;
+    drupal_goto($path, array('language' => $link['language']));
   }
-
-  $form['country'] = array(
-    '#type' => 'select',
-    '#options' => $values,
-    '#default_value' => url(current_path()),
-    '#description' => t('Choose your language'),
-  );
-
-  $form['go'] = array(
-    '#type' => 'submit',
-    '#value' => t('Go'),
-  );
-
-  $form['#attached']['js'] = array(
-    drupal_get_path('module', 'country_selector') . '/dropdown.js',
-  );
-
-  $form['#attributes']['class'] = array('js-hidden');
-
-  return $form;
 }
-
-function country_selector_form_submit($form, &$form_state) {
-  $path = $form_state['values']['country'];
-  drupal_goto($path, array('external' => TRUE));
-}
-?>

@@ -3,4 +3,3 @@ description = "A simple selector for european countries that redirects to the fr
 core = 7.x
 
 dependencies[] = geoip
-dependencies[] = translation
