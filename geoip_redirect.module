@@ -50,7 +50,7 @@ class GeoIpRedirectController {
   }
 
   protected function serveFromCache() {
-    if ($this->$originalCache) {
+    if ($this->originalCache) {
       $GLOBALS['conf']['cache'] = $this->originalCache;
       $cache = drupal_page_get_cache();
       if (is_object($cache)) {
@@ -85,7 +85,7 @@ class GeoIpRedirectMapping {
     $country = @geoip_country_code_by_name(ip_address());
     $mapping = variable_get('geoip_redirect_mapping', array());
     $language = language_default()->language;
-    return new CountrySelectorRedirect($mapping, $country, $language);
+    return new GeoIpRedirectMapping($mapping, $country, $language);
   }
   
   public function selectLanguage(){
@@ -127,7 +127,11 @@ function geoip_redirect_init() {
 
 function _geoip_redirect_goto($lang, $path = NULL) {
   $path = isset($path) ? $path : current_path();
-  $links = language_negotiation_get_switch_links('language', $path)->links;
+  $links = language_negotiation_get_switch_links('language', $path);
+  if (!$links) {
+    return;
+  }
+  $links = $links->links;
   if (!isset($links[$lang]) || !isset($links[$lang]['href'])) {
     $lang = language_default()->language;
   }
