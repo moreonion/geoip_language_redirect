@@ -1,6 +1,6 @@
 <?php
 
-class CountrySelectorController {
+class GeoIpRedirectController {
   protected static $instance = NULL;
 
   protected $languageSource = NULL;
@@ -9,11 +9,10 @@ class CountrySelectorController {
   public static function hook_boot() {
     if (php_sapi_name() === 'cli') { return; }
 
-    $instance = new CountrySelectorController(
-      isset($_GET['country-selector-select']) ? $_GET['country-selector-select'] : NULL,
+    $instance = new GeoIpRedirectController(
       $GLOBALS['base_url'],
       $_SERVER['HTTP_REFERER'],
-      isset($_COOKIE['country_selector'])
+      isset($_COOKIE['geoip_redirect'])
     );
     if ($instance->isActive()) {
       self::$instance = $instance;
@@ -27,10 +26,10 @@ class CountrySelectorController {
     };
   }
 
-  public function __construct($get, $base_url, $referer, $cookie) {
-    $came_from_outside = substr($_SERVER['HTTP_REFERER'], 0, strlen($base_url)) != $base_url;
+  public function __construct($base_url, $referer, $cookie) {
+    $came_from_outside = substr($referer, 0, strlen($base_url)) != $base_url;
     if ($came_from_outside && !$cookie) {
-      $this->languageSource = CountrySelectorGeoIp::fromDefaults();
+      $this->languageSource = GeoIpRedirectMapping::fromDefaults();
       $this->setCookie();
       $this->deactivateCache();
     }
@@ -41,7 +40,7 @@ class CountrySelectorController {
   }
 
   protected function setCookie() {
-    setcookie('country_selector', '1', 0, $GLOBALS['base_path']);
+    setcookie('geoip_redirect', '1', 0, $GLOBALS['base_path']);
   }
 
   protected function deactivateCache() {
@@ -68,12 +67,12 @@ class CountrySelectorController {
 
   public function redirect($path) {
     $langCode = $this->languageSource->selectLanguage();
-    _country_selector_goto($langCode, $path);
+    _geoip_redirect_goto($langCode, $path);
   }
 
 }
 
-class CountrySelectorGeoIp {
+class GeoIpRedirectMapping {
   protected $path;
   protected $country;
   protected $links;
@@ -84,14 +83,14 @@ class CountrySelectorGeoIp {
   public static function fromDefaults() {
     // use @: see https://bugs.php.net/bug.php?id=59753
     $country = @geoip_country_code_by_name(ip_address());
-    $mapping = variable_get('country_selector_mapping', array());
+    $mapping = variable_get('geoip_redirect_mapping', array());
     $language = language_default()->language;
     return new CountrySelectorRedirect($mapping, $country, $language);
   }
   
   public function selectLanguage(){
     $country = &$this->country;
-    $GLOBALS['country_selector_country'] = $country;
+    $_SESSION['geoip_redirect_country'] = $country;
     $mapping = &$this->mapping;
     if (isset($mapping[$country])) {
       return $mapping[$country];
@@ -113,8 +112,8 @@ class CountrySelectorGeoIp {
  * Checks if we possibly want to redirect to another URL and
  * disables page-cache if so.
  */
-function country_selector_boot() {
-  CountrySelectorController::hook_boot();
+function geoip_redirect_boot() {
+  GeoIpRedirectController::hook_boot();
 }
 
 /**
@@ -122,11 +121,11 @@ function country_selector_boot() {
  * 
  * Do redirect if needed.
  */
-function country_selector_init() {
-  CountrySelectorController::hook_init();
+function geoip_redirect_init() {
+  GeoIpRedirectController::hook_init();
 }
 
-function _country_selector_goto($lang, $path = NULL) {
+function _geoip_redirect_goto($lang, $path = NULL) {
   $path = isset($path) ? $path : current_path();
   $links = language_negotiation_get_switch_links('language', $path)->links;
   if (!isset($links[$lang]) || !isset($links[$lang]['href'])) {

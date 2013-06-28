@@ -1,5 +1,0 @@
-name = "Country selector"
-description = "A simple selector for european countries that redirects to the front page"
-core = 7.x
-
-dependencies[] = geoip
