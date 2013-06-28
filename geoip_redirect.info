@@ -2,4 +2,3 @@ name = "GeoIP redirect"
 description = "Redirect to language-URLs based on the GeoIP location"
 core = 7.x
 
-dependencies[] = geoip
