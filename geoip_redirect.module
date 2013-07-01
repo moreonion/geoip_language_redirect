@@ -2,23 +2,28 @@
 
 class GeoIpRedirectController {
   protected static $instance = NULL;
-
-  protected $languageSource = NULL;
   protected $originalCache = FALSE;
 
+  /**
+   * Prepare self::$instance if we might redirect in this request.
+   *
+   * Redirection is done if:
+   *  - The referer doesn't match the current base_url (request came from outside).
+   *  - The geoip_redirect-cookie isn't set (hasn't been redirected yet).
+   */
   public static function hook_boot() {
+    // Don't do anything if called via the CLI.
     if (php_sapi_name() === 'cli') { return; }
 
-    $instance = new GeoIpRedirectController(
-      $GLOBALS['base_url'],
-      $_SERVER['HTTP_REFERER'],
-      isset($_COOKIE['geoip_redirect'])
-    );
-    if ($instance->isActive()) {
-      self::$instance = $instance;
+    if (self::isActive($GLOBALS['base_url'], $_SERVER['HTTP_REFERER'], isset($_COOKIE['geoip_redirect']))) {
+      self::$instance = new GeoIpRedirectController();
     }
   }
 
+  /**
+   * Redirect and serve from cache
+   * if self::$instance was set in self::hook_boot().
+   */
   public static function hook_init() {
     if (isset(self::$instance)) {
       self::$instance->redirect(current_path());
@@ -26,32 +31,45 @@ class GeoIpRedirectController {
     };
   }
 
-  public function __construct($base_url, $referer, $cookie) {
+  /**
+   * Set cookie and deactivate page-cache
+   */
+  public function __construct() {
+    $this->setCookie();
+    $this->deactivateCache();
+  }
+
+  /**
+   * Check whether a redirect may happen in this request.
+   */
+  public static function isActive($referer, $base_url, $cookie) {
     $came_from_outside = substr($referer, 0, strlen($base_url)) != $base_url;
-    if ($came_from_outside && !$cookie) {
-      $this->languageSource = GeoIpRedirectMapping::fromDefaults();
-      $this->setCookie();
-      $this->deactivateCache();
-    }
+    return ($came_from_outside && !$cookie);
   }
 
-  public function isActive() {
-    return isset($this->languageSource);
-  }
-
+  /**
+   * Set geoip_redirect cookie.
+   */
   protected function setCookie() {
     setcookie('geoip_redirect', '1', 0, $GLOBALS['base_path']);
   }
 
+  /**
+   * Deactivate Drupal's page cache and remember original config value.
+   */
   protected function deactivateCache() {
     if ($this->originalCache = variable_get('cache')) {
       $GLOBALS['conf']['cache'] = FALSE;
     }
   }
 
+  /**
+   * Serve current URL from cache if possible.
+   */
   protected function serveFromCache() {
     if ($this->originalCache) {
       $GLOBALS['conf']['cache'] = $this->originalCache;
+    return;
       $cache = drupal_page_get_cache();
       if (is_object($cache)) {
         header('X-Drupal-Cache: HIT');
@@ -65,32 +83,54 @@ class GeoIpRedirectController {
     }
   }
 
-  public function redirect($path) {
-    $langCode = $this->languageSource->selectLanguage();
+  /**
+   * Redirect to target URL.
+   *
+   * @param path of the current page
+   * @param object that returns the language to be redirected to.
+   */
+  public function redirect($path, $language_source = NULL) {
+    if (!$language_source) {
+      $language_source = GeoIpRedirectMapping::fromDefaults();
+    }
+    $langCode = $language_source->selectLanguage();
     _geoip_redirect_goto($langCode, $path);
   }
 
 }
 
+/**
+ * Mapping from country code to language.
+ */
 class GeoIpRedirectMapping {
-  protected $path;
   protected $country;
-  protected $links;
   protected $mapping;
   protected $defaultLanguage;
-  protected $language;
 
+  /**
+   * Default constructor uses:
+   *  - GeoIP detected country
+   *  - geoip_redirect_mapping from variable_get
+   *  - Drupal default language.
+   */
   public static function fromDefaults() {
     // use @: see https://bugs.php.net/bug.php?id=59753
-    $country = @geoip_country_code_by_name(ip_address());
+    if (function_exists('geoip_country_code_by_name')) {
+      $country = @geoip_country_code_by_name(ip_address());
+    } else {
+      $country = FALSE;
+    }
     $mapping = variable_get('geoip_redirect_mapping', array());
     $language = language_default()->language;
     return new GeoIpRedirectMapping($mapping, $country, $language);
   }
-  
+
+  /**
+   * Select the language based on country, mapping and default-language.
+   */
   public function selectLanguage(){
     $country = &$this->country;
-    $_SESSION['geoip_redirect_country'] = $country;
+    //$_SESSION['geoip_redirect_country'] = $country;
     $mapping = &$this->mapping;
     if (isset($mapping[$country])) {
       return $mapping[$country];
@@ -99,6 +139,11 @@ class GeoIpRedirectMapping {
     }
   }
 
+  /**
+   * @param mapping array of format 'country-code' => 'language-code'.
+   * @param country-code of the detected country.
+   * @param language that is used if no applicable mapping is found. 
+   */
   public function __construct($mapping, $country, $default_language) {
     $this->mapping = $mapping;
     $this->country = $country;
@@ -125,6 +170,13 @@ function geoip_redirect_init() {
   GeoIpRedirectController::hook_init();
 }
 
+/**
+ * Redirect to the URL that shows the content of the current URL
+ * in a given language.
+ * 
+ * @param language to be redirected to
+ * @param string current URL.
+ */
 function _geoip_redirect_goto($lang, $path = NULL) {
   $path = isset($path) ? $path : current_path();
   $links = language_negotiation_get_switch_links('language', $path);
@@ -135,6 +187,7 @@ function _geoip_redirect_goto($lang, $path = NULL) {
   if (!isset($links[$lang]) || !isset($links[$lang]['href'])) {
     $lang = language_default()->language;
   }
+  $lang = 'de-AT';
   if (isset($links[$lang])) {
     $link = &$links[$lang];
     $path = isset($link['href']) ? $link['href'] : $path;
