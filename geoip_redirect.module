@@ -42,9 +42,9 @@ class GeoIpRedirectController {
   /**
    * Check whether a redirect may happen in this request.
    */
-  public static function isActive($referer, $base_url, $cookie) {
+  public static function isActive($base_url, $referer, $cookie) {
     $came_from_outside = substr($referer, 0, strlen($base_url)) != $base_url;
-    return ($came_from_outside && !$cookie);
+    return (TRUE || $came_from_outside && !$cookie);
   }
 
   /**
@@ -187,7 +187,10 @@ function _geoip_redirect_goto($lang, $path = NULL) {
   if (!isset($links[$lang]) || !isset($links[$lang]['href'])) {
     $lang = language_default()->language;
   }
-  $lang = 'de-AT';
+  // Don't redirect to the very same language.
+  if ($lang == $GLOBALS['language']->language) {
+    return;
+  }
   if (isset($links[$lang])) {
     $link = &$links[$lang];
     $path = isset($link['href']) ? $link['href'] : $path;
