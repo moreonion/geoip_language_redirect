@@ -15,7 +15,9 @@ class GeoIpRedirectController {
     // Don't do anything if called via the CLI.
     if (php_sapi_name() === 'cli') { return; }
 
-    if (self::isActive($GLOBALS['base_url'], $_SERVER['HTTP_REFERER'], isset($_COOKIE['geoip_redirect']))) {
+    // use session_cache as storage
+    drupal_load('module', 'session_cache');
+    if (self::isActive($GLOBALS['base_url'], $_SERVER['HTTP_REFERER'], session_cache_get('geoip_redirect'))) {
       self::$instance = new GeoIpRedirectController();
     }
   }
@@ -44,14 +46,14 @@ class GeoIpRedirectController {
    */
   public static function isActive($base_url, $referer, $cookie) {
     $came_from_outside = substr($referer, 0, strlen($base_url)) != $base_url;
-    return (TRUE || $came_from_outside && !$cookie);
+    return $came_from_outside && !$cookie;
   }
 
   /**
    * Set geoip_redirect cookie.
    */
   protected function setCookie() {
-    setcookie('geoip_redirect', '1', 0, $GLOBALS['base_path']);
+    session_cache_set('geoip_redirect', '1');
   }
 
   /**

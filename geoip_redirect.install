@@ -18,3 +18,10 @@ function geoip_redirect_requirements($phase) {
   }
   return $requirements;
 }
+
+/**
+ * enable session_cache module.
+ */
+function geoip_redirect_update_1() {
+  module_enable(array('session_cache'));
+}

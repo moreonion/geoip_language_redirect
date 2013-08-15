@@ -1,4 +1,6 @@
 name = "GeoIP redirect"
 description = "Redirect to language-URLs based on the GeoIP location"
 core = 7.x
+project = geoip_redirect
 
+dependencies[] = session_cache
