@@ -17,7 +17,7 @@ class GeoIpRedirectController {
 
     // use session_cache as storage
     drupal_load('module', 'session_cache');
-    if (self::isActive($GLOBALS['base_url'], $_SERVER['HTTP_REFERER'], session_cache_get('geoip_redirect'))) {
+    if (self::isActive($GLOBALS['base_url'], $_GET['q'], $_SERVER['HTTP_REFERER'], session_cache_get('geoip_redirect'))) {
       self::$instance = new GeoIpRedirectController();
     }
   }
@@ -44,9 +44,10 @@ class GeoIpRedirectController {
   /**
    * Check whether a redirect may happen in this request.
    */
-  public static function isActive($base_url, $referer, $cookie) {
+  public static function isActive($base_url, $current, $referer, $cookie) {
     $came_from_outside = substr($referer, 0, strlen($base_url)) != $base_url;
-    return $came_from_outside && !$cookie;
+    $on_front_page = empty($current);
+    return $came_from_outside && (!$cookie || empty($on_front_page));
   }
 
   /**
