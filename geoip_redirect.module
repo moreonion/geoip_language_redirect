@@ -47,7 +47,7 @@ class GeoIpRedirectController {
   public static function isActive($base_url, $current, $referer, $cookie) {
     $came_from_outside = substr($referer, 0, strlen($base_url)) != $base_url;
     $on_front_page = empty($current);
-    return $came_from_outside && (!$cookie || empty($on_front_page));
+    return $came_from_outside && (!$cookie || $on_front_page);
   }
 
   /**
