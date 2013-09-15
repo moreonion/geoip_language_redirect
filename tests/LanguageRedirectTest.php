@@ -1,8 +1,8 @@
 <?php
 
-require_once dirname(__FILE__) . '/../geoip_redirect.module';
+namespace Drupal\geoip_language_redirect;
 
-class GeoIpLanguageRedirectTest extends DrupalUnitTestCase {
+class LanguageRedirectTest extends \DrupalUnitTestCase {
   protected function createRedirector($overrides = array()) {
     $defaults = array(
       'baseUrl' => 'http://some.baseurl.example.com',
@@ -11,6 +11,7 @@ class GeoIpLanguageRedirectTest extends DrupalUnitTestCase {
       'currentPath' => '/somepath',
       'currentLanguage' => 'en',
       'checkAccess' => TRUE,
+      'defaultLanguage' => 'en',
       'switchLinks' => array(
         'de' => array('href' => '/somepath-de', 'language' => 'de'),
       ),
@@ -19,15 +20,15 @@ class GeoIpLanguageRedirectTest extends DrupalUnitTestCase {
     );
     $values = $overrides + $defaults;
     
-    $api = $this->getMock('GeoIpDrupal', array_merge(array('disableCache', 'redirect', 'setCookie'),array_keys($values)));
+    $api = $this->getMock('Drupal', array_merge(array('disableCache', 'redirect', 'setCookie', 'serveFromCache'),array_keys($values)));
     foreach ($values as $method => $value) {
       $api->expects($this->any())->method($method)->will($this->returnValue($value));
     }
     
-    $lr = new GeoIpLanguageRedirect(
+    $lr = new LanguageRedirect(
       $api,
-      array('GeoIpRedirectReferer'),
-      array('GeoIpRedirectCookie', 'GeoIpRedirectCountry')
+      array('RedirectReferer'),
+      array('RedirectCookie', 'RedirectCountry')
     );
     return array($api, $lr);
   }

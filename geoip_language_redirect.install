@@ -5,7 +5,7 @@
  *
  * Check if the GeoIP PECL-module is installed.
  */
-function geoip_redirect_requirements($phase) {
+function geoip_language_redirect_requirements($phase) {
   $t = get_t();
   $requirements = array();
 
@@ -17,11 +17,4 @@ function geoip_redirect_requirements($phase) {
     );
   }
   return $requirements;
-}
-
-/**
- * enable session_cache module.
- */
-function geoip_redirect_update_1() {
-  module_enable(array('session_cache'));
 }

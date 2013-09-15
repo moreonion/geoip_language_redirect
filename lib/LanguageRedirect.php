@@ -1,0 +1,49 @@
+<?php
+
+namespace Drupal\geoip_language_redirect;
+
+class LanguageRedirect  {
+  public static $instance = NULL;
+  protected $api;
+  protected $redirectPossible = TRUE;
+  protected $originalCache = FALSE;
+  protected $classes;
+  
+  public function fromDefaults() {
+    return new static(
+      new Drupal(),
+      array('RedirectReferer'),
+      array('RedirectCookie', 'RedirectCountry')
+    );
+  }
+  
+  public function __construct($api, $boot_classes, $language_init_classes) {
+    $this->api = $api;
+    $this->classes = array(
+      'boot' => $boot_classes,
+      'language_init' => $language_init_classes,
+    );
+  }
+  
+  public function hook_boot() {
+    $classes = $this->classes['boot'];
+    while ($this->redirectPossible && ($class = array_shift($classes))) {
+      $class = __NAMESPACE__ . '\\' . $class;
+      $redirector = new $class($this->api);
+      $this->redirectPossible = $redirector->checkAndRedirect();
+    }
+    if ($this->redirectPossible) {
+      $this->api->disableCache();
+    }
+  }
+
+  public function hook_language_init() {
+    $classes = $this->classes['language_init'];
+    while ($this->redirectPossible && ($class = array_shift($classes))) {
+      $class = __NAMESPACE__ . '\\' . $class;
+      $redirector = new $class($this->api);
+      $this->redirectPossible = $redirector->checkAndRedirect();
+    }
+    return $this->api->serveFromCache();
+  }
+}
