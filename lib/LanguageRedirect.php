@@ -6,10 +6,9 @@ class LanguageRedirect  {
   public static $instance = NULL;
   protected $api;
   protected $redirectPossible = TRUE;
-  protected $originalCache = FALSE;
   protected $classes;
   
-  public function fromDefaults() {
+  public static function fromDefaults() {
     return new static(
       new Drupal(),
       array('RedirectReferer'),

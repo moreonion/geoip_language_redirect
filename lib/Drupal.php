@@ -3,14 +3,14 @@
 namespace Drupal\geoip_language_redirect;
 
 /**
- * Wrap Drupal methods to maket this module
+ * Wrap Drupal methods to make this module
  * unit-testable.
  */
 class Drupal {
   protected $originalCache = NULL;
 
   public function readCookie() {
-    \session_cache_get('geoip_redirect');
+    return \session_cache_get('geoip_redirect');
   }
   /**
    * Set the language cookie.
@@ -31,6 +31,7 @@ class Drupal {
     \drupal_goto($path, array('language' => $language));
   }
   public function switchLinks($path) {
+    drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
     $links = \language_negotiation_get_switch_links('language', $path);
     return $links ? $links->links : NULL;
   }
@@ -38,6 +39,7 @@ class Drupal {
    * Check if the current logged-in user has access to a path.
    */
   public function checkAccess($path) {
+    drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
     return ($router_item = \menu_get_item($path)) && $router_item['access'];
   }
 
@@ -46,7 +48,7 @@ class Drupal {
    */
   public function disableCache() {
     if ($this->originalCache = \variable_get('cache')) {
-      $GLOBALS['conf']['cache'] = FALSE;
+      $GLOBALS['conf']['skip_cache'] = TRUE;
     }
   }
   
@@ -55,7 +57,6 @@ class Drupal {
    */
   public function serveFromCache() {
     if ($this->originalCache) {
-      $GLOBALS['conf']['cache'] = $this->originalCache;
       $cache = \drupal_page_get_cache();
       if (\is_object($cache)) {
         \header('X-Drupal-Cache: HIT');
@@ -73,6 +74,14 @@ class Drupal {
    * Get current users country from GeoIP.
    */
   public function getCountry() {
+    if (variable_get('geoip_debug', FALSE)) {
+      if (isset($_GET['geoip_country'])) {
+        return $_GET['geoip_country'];
+      }
+      if (isset($_GET['geoip'])) {
+        return $_GET['geoip'];
+      }
+    }
     // use @: see https://bugs.php.net/bug.php?id=59753
     if (function_exists('geoip_country_code_by_name')) {
       return @geoip_country_code_by_name(ip_address());
@@ -83,7 +92,7 @@ class Drupal {
    * Get mapping from ISO country-codes to language-codes.
    */
   public function getMapping() {
-    variable_get('geoip_redirect_mapping', array());
+    return variable_get('geoip_redirect_mapping', array());
   }
   
   public function baseUrl() {
