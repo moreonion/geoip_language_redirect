@@ -36,7 +36,7 @@ abstract class RedirectBase {
     if (isset($links[$langCode])) {
       $link = &$links[$langCode];
       $path = isset($link['href']) ? $link['href'] : $path;
-      if ($this->api->checkAccess($path)) {
+      if ($this->api->checkAccess($path, $langCode)) {
         $this->api->redirect($path, $link['language']);
       }
     }

@@ -38,8 +38,16 @@ class Drupal {
   /**
    * Check if the current logged-in user has access to a path.
    */
-  public function checkAccess($path) {
+  public function checkAccess($path, $langCode) {
     drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+    // Extra handling for front-page.
+    if (empty($path)) {
+      if (module_exists('i18n_variable')) {
+      	$path = \i18n_variable_get('site_frontpage', $langCode, $path);
+      } else {
+      	$path = \variable_get('site_frontpage', $path);
+      }
+    }
     return ($router_item = \menu_get_item($path)) && $router_item['access'];
   }
 
