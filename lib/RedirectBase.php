@@ -21,6 +21,10 @@ abstract class RedirectBase {
    * Redirect to the same page in a different language.
    */
   public function redirect($langCode) {
+    // Don't redirect to the very same language.
+    if ($langCode == $this->api->currentLanguage()) {
+      return;
+    }
     drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
     $this->api->setCookie($langCode);
     $path = isset($path) ? $path : $this->api->currentPath();
@@ -29,10 +33,9 @@ abstract class RedirectBase {
     }
     if (!isset($links[$langCode]) || !isset($links[$langCode]['href'])) {
       $langCode = $this->api->defaultLanguage();
-    }
-    // Don't redirect to the very same language.
-    if ($langCode == $this->api->currentLanguage()) {
-      return;
+      if ($this->api->currentLanguage() == $langCode) {
+      	return;
+      }
     }
     if (isset($links[$langCode])) {
       $link = &$links[$langCode];
