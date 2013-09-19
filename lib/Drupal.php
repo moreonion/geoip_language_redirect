@@ -31,7 +31,6 @@ class Drupal {
     \drupal_goto($path, array('language' => $language));
   }
   public function switchLinks($path) {
-    drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
     $links = \language_negotiation_get_switch_links('language', $path);
     return $links ? $links->links : NULL;
   }
@@ -39,7 +38,6 @@ class Drupal {
    * Check if the current logged-in user has access to a path.
    */
   public function checkAccess($path, $langCode) {
-    drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
     // Extra handling for front-page.
     if (empty($path)) {
       if (module_exists('i18n_variable')) {

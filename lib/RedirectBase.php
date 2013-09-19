@@ -21,6 +21,7 @@ abstract class RedirectBase {
    * Redirect to the same page in a different language.
    */
   public function redirect($langCode) {
+    drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
     $this->api->setCookie($langCode);
     $path = isset($path) ? $path : $this->api->currentPath();
     if (!($links = $this->api->switchLinks($path))) {
