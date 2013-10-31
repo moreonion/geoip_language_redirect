@@ -17,6 +17,7 @@ class LanguageRedirectTest extends \DrupalUnitTestCase {
       ),
       'getCountry' => 'AT',
       'getMapping' => array('AT' => 'de', 'GB' => 'en'),
+      'userAgent' => 'Mozilla',
     );
     $values = $overrides + $defaults;
     
@@ -27,7 +28,7 @@ class LanguageRedirectTest extends \DrupalUnitTestCase {
     
     $lr = new LanguageRedirect(
       $api,
-      array('RedirectReferer'),
+      array('RedirectReferer', 'RedirectUserAgent'),
       array('RedirectCookie', 'RedirectCountry')
     );
     return array($api, $lr);

@@ -11,7 +11,7 @@ class LanguageRedirect  {
   public static function fromDefaults() {
     return new static(
       new Drupal(),
-      array('RedirectReferer'),
+      array('RedirectReferer', 'RedirectUserAgent'),
       array('RedirectCookie', 'RedirectCountry')
     );
   }

@@ -108,4 +108,8 @@ class Drupal {
   public function referer() {
     return $_SERVER['HTTP_REFERER'];
   }
+
+  public function userAgent() {
+    return isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : FALSE;
+  }
 }
