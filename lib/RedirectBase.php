@@ -21,6 +21,9 @@ abstract class RedirectBase {
    * Redirect to the same page in a different language.
    */
   public function redirect($langCode) {
+    if (variable_get('geoip_debug', FALSE)) {
+      watchdog('geoip_language_redirect', 'Try redirect to language in class !class: !code', array('!class' => get_class($this), '!code' => $langCode), WATCHDOG_DEBUG);
+    }
     // Don't redirect to the very same language.
     if ($langCode == $this->api->currentLanguage()) {
       return;

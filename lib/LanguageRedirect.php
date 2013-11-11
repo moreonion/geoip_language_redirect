@@ -30,6 +30,9 @@ class LanguageRedirect  {
       $class = __NAMESPACE__ . '\\' . $class;
       $redirector = new $class($this->api);
       $this->redirectPossible = $redirector->checkAndRedirect();
+      if (variable_get('geoip_debug', FALSE)) {
+      	watchdog('geoip_language_redirect', 'After !class redirectPossible=!bool', array('!class' => $class, '!bool' => $this->redirectPossible), WATCHDOG_DEBUG);
+      }
     }
     if ($this->redirectPossible) {
       $this->api->disableCache();

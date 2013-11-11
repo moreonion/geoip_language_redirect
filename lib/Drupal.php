@@ -91,6 +91,8 @@ class Drupal {
     // use @: see https://bugs.php.net/bug.php?id=59753
     if (function_exists('geoip_country_code_by_name')) {
       return @geoip_country_code_by_name(ip_address());
+    } else {
+      watchdog('geoip_language_redirect', 'geoip_country_code_by_name() does not exist. Check your installation.', array(), WATCHDOG_WARNING);
     }
   }
   
