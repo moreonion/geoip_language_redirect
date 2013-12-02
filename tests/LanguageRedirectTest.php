@@ -9,6 +9,7 @@ class LanguageRedirectTest extends \DrupalUnitTestCase {
       'referer' => 'http://non-macthing.example.com',
       'readCookie' => '',
       'currentPath' => '/somepath',
+      'currentParameters' => array(),
       'currentLanguage' => 'en',
       'checkAccess' => TRUE,
       'defaultLanguage' => 'en',
@@ -20,12 +21,12 @@ class LanguageRedirectTest extends \DrupalUnitTestCase {
       'userAgent' => 'Mozilla',
     );
     $values = $overrides + $defaults;
-    
+
     $api = $this->getMock('Drupal', array_merge(array('disableCache', 'redirect', 'setCookie', 'serveFromCache'),array_keys($values)));
     foreach ($values as $method => $value) {
       $api->expects($this->any())->method($method)->will($this->returnValue($value));
     }
-    
+
     $lr = new LanguageRedirect(
       $api,
       array('RedirectReferer', 'RedirectUserAgent'),
@@ -43,7 +44,7 @@ class LanguageRedirectTest extends \DrupalUnitTestCase {
     $lr->hook_boot();
     $lr->hook_language_init();
   }
-  
+
   public function testRedirectWithCookie() {
     list($api, $lr) = $this->createRedirector(array(
       'readCookie' => 'de',
@@ -54,7 +55,22 @@ class LanguageRedirectTest extends \DrupalUnitTestCase {
     $lr->hook_boot();
     $lr->hook_language_init();
   }
-  
+ 
+ public function testRedirectWithQuery() {
+    list($api, $lr) = $this->createRedirector(array(
+      'readCookie' => 'de',
+      'currentParameters' => array('test1' => 'test2')
+    ));
+    $api->expects($this->once())->method('disableCache');
+    $api->expects($this->once())->method('redirect')->with(
+      $this->anyThing(),
+      $this->anyThing(),
+      $this->equalTo(array('query' => array('test1' => 'test2')))
+    );
+    $lr->hook_boot();
+    $lr->hook_language_init();
+  }
+
   public function testRedirectWithGeoIp() {
     list($api, $lr) = $this->createRedirector(array(
     ));
@@ -64,7 +80,7 @@ class LanguageRedirectTest extends \DrupalUnitTestCase {
     $lr->hook_boot();
     $lr->hook_language_init();
   }
-  
+
   public function testNoRedirectWithCurrentLanguageInCookie() {
     list($api, $lr) = $this->createRedirector(array(
       'readCookie' => 'en',

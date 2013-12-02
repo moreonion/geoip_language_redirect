@@ -21,14 +21,17 @@ class Drupal {
   public function currentPath() {
     return $_GET['q'];
   }
+  public function currentParameters() {
+    return drupal_get_query_parameters();
+  }
   public function currentLanguage() {
     return $GLOBALS['language']->language;
   }
   public function defaultLanguage() {
     return \language_default()->language;
   }
-  public function redirect($path, $language) {
-    \drupal_goto($path, array('language' => $language));
+  public function redirect($path, $language, $options = array()) {
+    \drupal_goto($path, array('language' => $language) + $options);
   }
   public function switchLinks($path) {
     $links = \language_negotiation_get_switch_links('language', $path);
