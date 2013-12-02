@@ -55,21 +55,6 @@ class LanguageRedirectTest extends \DrupalUnitTestCase {
     $lr->hook_boot();
     $lr->hook_language_init();
   }
- 
- public function testRedirectWithQuery() {
-    list($api, $lr) = $this->createRedirector(array(
-      'readCookie' => 'de',
-      'currentParameters' => array('test1' => 'test2')
-    ));
-    $api->expects($this->once())->method('disableCache');
-    $api->expects($this->once())->method('redirect')->with(
-      $this->anyThing(),
-      $this->anyThing(),
-      $this->equalTo(array('query' => array('test1' => 'test2')))
-    );
-    $lr->hook_boot();
-    $lr->hook_language_init();
-  }
 
   public function testRedirectWithGeoIp() {
     list($api, $lr) = $this->createRedirector(array(

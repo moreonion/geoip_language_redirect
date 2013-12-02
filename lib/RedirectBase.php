@@ -44,8 +44,7 @@ abstract class RedirectBase {
       $link = &$links[$langCode];
       $path = isset($link['href']) ? $link['href'] : $path;
       if ($this->api->checkAccess($path, $langCode)) {
-        $options['query'] = $this->api->currentParameters();
-        $this->api->redirect($path, $link['language'], $options);
+        $this->api->redirect($path, $link['language']);
       }
     }
   }

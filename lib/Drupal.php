@@ -31,7 +31,11 @@ class Drupal {
     return \language_default()->language;
   }
   public function redirect($path, $language, $options = array()) {
-    \drupal_goto($path, array('language' => $language) + $options);
+    $options = array('language' => $language) + $options;
+    if (!isset($options['query'])) {
+      $options['query'] = $this->currentParameters();
+    }
+    \drupal_goto($path, $options);
   }
   public function switchLinks($path) {
     $links = \language_negotiation_get_switch_links('language', $path);
