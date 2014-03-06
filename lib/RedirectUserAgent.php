@@ -23,7 +23,6 @@ class RedirectUserAgent extends RedirectBase {
 
     foreach (array('Webkit', 'Safari', 'Opera', 'Dillo', 'Lynx', 'Links', 'w3m', 'Midori', 'iCab') as $engine) {
       if (strpos($agent, $engine) !== FALSE) {
-        echo "Engine: $engine\n";
         return TRUE;
       }
     }
