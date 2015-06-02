@@ -2,7 +2,7 @@
 
 namespace Drupal\geoip_language_redirect;
 
-class LanguageRedirectTest extends \DrupalUnitTestCase {
+class LanguageRedirectTest extends \Drupal\Tests\DrupalUnitTestCase {
   protected function createRedirector($overrides = array()) {
     $defaults = array(
       'baseUrl' => 'http://some.baseurl.example.com',

@@ -2,7 +2,7 @@
 
 namespace Drupal\geoip_language_redirect;
 
-class RedirectUserAgentTest extends \DrupalUnitTestCase {
+class RedirectUserAgentTest extends \Drupal\Tests\DrupalUnitTestCase {
   protected function createRedirect($agent = 'Mozilla') {
     $values = array(
       'userAgent' => $agent,
