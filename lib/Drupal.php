@@ -46,7 +46,7 @@ class Drupal {
       $front_links = \language_negotiation_get_switch_links('language', '');
       foreach ($links->links as $lang => $link) {
         if (empty($link['href'])) {
-          $links->links[$lang] = $front_links[$lang];
+          $links->links[$lang] = $front_links->links[$lang];
         }
       }
     }
