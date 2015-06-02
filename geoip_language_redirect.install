@@ -18,3 +18,10 @@ function geoip_language_redirect_requirements($phase) {
   }
   return $requirements;
 }
+
+/**
+ * Implements hook_uninstall().
+ */
+function geoip_language_redirect_uninstall() {
+  variable_del('geoip_language_redirect_default_language');
+}

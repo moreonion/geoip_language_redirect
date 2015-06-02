@@ -28,7 +28,10 @@ class Drupal {
     return $GLOBALS['language']->language;
   }
   public function defaultLanguage() {
-    return \language_default()->language;
+    return \variable_get(
+      'geoip_language_redirect_default_language',
+      \language_default()->language
+    );
   }
   public function redirect($path, $language, $options = array()) {
     $options = array('language' => $language) + $options;
