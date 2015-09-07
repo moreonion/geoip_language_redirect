@@ -2,11 +2,11 @@
 
 namespace Drupal\geoip_language_redirect;
 
-class LanguageRedirectTest extends \Drupal\Tests\DrupalUnitTestCase {
+class LanguageRedirectTest extends \DrupalUnitTestCase {
   protected function createRedirector($overrides = array()) {
     $defaults = array(
       'baseUrl' => 'http://some.baseurl.example.com',
-      'referer' => 'http://non-macthing.example.com',
+      'referer' => 'http://non-matching.example.com',
       'readCookie' => '',
       'currentPath' => '/somepath',
       'currentParameters' => array(),
@@ -19,18 +19,19 @@ class LanguageRedirectTest extends \Drupal\Tests\DrupalUnitTestCase {
       'getCountry' => 'AT',
       'getMapping' => array('AT' => 'de', 'GB' => 'en'),
       'userAgent' => 'Mozilla',
+      'redirectHeader' => FALSE,
     );
     $values = $overrides + $defaults;
 
-    $api = $this->getMock('Drupal', array_merge(array('disableCache', 'redirect', 'setCookie', 'serveFromCache'),array_keys($values)));
+    $api = $this->getMock('Drupal', array_merge(array('disableCache', 'redirect', 'serveFromCache'),array_keys($values)));
     foreach ($values as $method => $value) {
       $api->expects($this->any())->method($method)->will($this->returnValue($value));
     }
 
     $lr = new LanguageRedirect(
       $api,
-      array('RedirectReferer', 'RedirectUserAgent'),
-      array('RedirectCookie', 'RedirectCountry')
+      array('CheckHeader', 'RedirectReferer', 'RedirectUserAgent'),
+      array('RedirectHeader', 'RedirectCountry')
     );
     return array($api, $lr);
   }
@@ -45,37 +46,15 @@ class LanguageRedirectTest extends \Drupal\Tests\DrupalUnitTestCase {
     $lr->hook_language_init();
   }
 
-  public function testRedirectWithCookie() {
-    list($api, $lr) = $this->createRedirector(array(
-      'readCookie' => 'de',
-    ));
-    $api->expects($this->once())->method('disableCache');
-    $api->expects($this->once())->method('redirect');
-    $api->expects($this->once())->method('setCookie')->with($this->equalTo('de'));
-    $lr->hook_boot();
-    $lr->hook_language_init();
-  }
-
   public function testRedirectWithGeoIp() {
     list($api, $lr) = $this->createRedirector(array(
     ));
     $api->expects($this->once())->method('disableCache');
     $api->expects($this->once())->method('redirect')->with($this->equalTo('/somepath-de'));
-    $api->expects($this->once())->method('setCookie')->with($this->equalTo('de'));
     $lr->hook_boot();
     $lr->hook_language_init();
   }
 
-  public function testNoRedirectWithCurrentLanguageInCookie() {
-    list($api, $lr) = $this->createRedirector(array(
-      'readCookie' => 'en',
-    ));
-    $api->expects($this->once())->method('disableCache');
-    $api->expects($this->never())->method('redirect');
-    $lr->hook_boot();
-    $lr->hook_language_init();
-  }
-  
   public function testNoRedirectWithCountryHavingCurrentLanguage() {
     list($api, $lr) = $this->createRedirector(array(
       'getCountry' => 'GB',
@@ -85,4 +64,26 @@ class LanguageRedirectTest extends \Drupal\Tests\DrupalUnitTestCase {
     $lr->hook_boot();
     $lr->hook_language_init();
   }
+
+  public function testNoRedirectBasedOnHeader() {
+    list($api, $lr) = $this->createRedirector(array(
+      'redirectHeader' => array('redirect' => 'no'),
+    ));
+    $api->expects($this->never())->method('disableCache');
+    $api->expects($this->never())->method('redirect');
+    $lr->hook_boot();
+    $lr->hook_language_init();
+  }
+
+  public function testRedirectBasedOnHeader() {
+    list($api, $lr) = $this->createRedirector(array(
+      'redirectHeader' => array('redirect' => 'yes', 'country' => 'AT'),
+      'getCountry' => 'GB', // Avoid geoip redirect.
+    ));
+    $api->expects($this->once())->method('disableCache');
+    $api->expects($this->once())->method('redirect')->with($this->equalTo('/somepath-de'));
+    $lr->hook_boot();
+    $lr->hook_language_init();
+  }
+
 }

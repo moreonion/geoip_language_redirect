@@ -8,16 +8,22 @@ namespace Drupal\geoip_language_redirect;
  */
 class Drupal {
   protected $originalCache = NULL;
+  protected $header = NULL;
 
-  public function readCookie() {
-    return \session_cache_get('geoip_redirect');
+  public function redirectHeader() {
+    if (!isset($this->header)) {
+      $header_var = variable_get('geoip_language_redirect_trusted_header', 'HTTP_X_GEOIP');
+      if (isset($_SERVER[$header_var])) {
+        $this->header = array();
+        parse_str($_SERVER['HTTP_X_GEOIP'], $vars);
+      }
+      else {
+        $this->header = array();
+      }
+    }
+    return $this->header;
   }
-  /**
-   * Set the language cookie.
-   */
-  public function setCookie($value) {
-    \session_cache_set('geoip_redirect', $value);
-  }
+
   public function currentPath() {
     return $_GET['q'];
   }

@@ -4,4 +4,3 @@ core = 7.x
 project = geoip_language_redirect
 
 dependencies[] = psr0
-dependencies[] = session_cache

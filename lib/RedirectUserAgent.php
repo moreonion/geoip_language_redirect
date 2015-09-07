@@ -3,6 +3,9 @@
 namespace Drupal\geoip_language_redirect;
 
 class RedirectUserAgent extends RedirectBase {
+  /**
+   * Only allow redirect for known non-bot user agents.
+   */
   public function checkAndRedirect() {
     if (!($agent = $this->api->userAgent())) {
       return FALSE;
@@ -17,13 +20,13 @@ class RedirectUserAgent extends RedirectBase {
         }
       }
       if (!$isBot) {
-        return TRUE;
+        return NULL;
       }
     }
 
     foreach (array('Webkit', 'Safari', 'Opera', 'Dillo', 'Lynx', 'Links', 'w3m', 'Midori', 'iCab') as $engine) {
       if (strpos($agent, $engine) !== FALSE) {
-        return TRUE;
+        return NULL;
       }
     }
     return FALSE;

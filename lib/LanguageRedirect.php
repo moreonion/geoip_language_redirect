@@ -5,14 +5,14 @@ namespace Drupal\geoip_language_redirect;
 class LanguageRedirect  {
   public static $instance = NULL;
   protected $api;
-  protected $redirectPossible = TRUE;
+  protected $redirectPossible = NULL;
   protected $classes;
   
   public static function fromDefaults() {
     return new static(
       new Drupal(),
-      array('RedirectReferer', 'RedirectUserAgent'),
-      array('RedirectCookie', 'RedirectCountry')
+      array('CheckHeader', 'RedirectReferer', 'RedirectUserAgent'),
+      array('RedirectHeader', 'RedirectCookie', 'RedirectCountry')
     );
   }
   
@@ -26,13 +26,16 @@ class LanguageRedirect  {
   
   public function hook_boot() {
     $classes = $this->classes['boot'];
-    while ($this->redirectPossible && ($class = array_shift($classes))) {
+    while (is_null($this->redirectPossible) && ($class = array_shift($classes))) {
       $class = __NAMESPACE__ . '\\' . $class;
       $redirector = new $class($this->api);
       $this->redirectPossible = $redirector->checkAndRedirect();
       if (variable_get('geoip_debug', FALSE)) {
       	watchdog('geoip_language_redirect', 'After !class redirectPossible=!bool', array('!class' => $class, '!bool' => $this->redirectPossible), WATCHDOG_DEBUG);
       }
+    }
+    if (is_null($this->redirectPossible)) {
+      $this->redirectPossible = TRUE;
     }
     if ($this->redirectPossible) {
       $this->api->disableCache();

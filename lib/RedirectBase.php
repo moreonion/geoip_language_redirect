@@ -29,7 +29,6 @@ abstract class RedirectBase {
       return;
     }
     drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
-    $this->api->setCookie($langCode);
     $path = isset($path) ? $path : $this->api->currentPath();
     if (!($links = $this->api->switchLinks($path))) {
       return;
