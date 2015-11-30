@@ -12,7 +12,7 @@ class LanguageRedirect  {
     return new static(
       new Drupal(),
       array('CheckHeader', 'RedirectReferer', 'RedirectUserAgent'),
-      array('RedirectHeader', 'RedirectCookie', 'RedirectCountry')
+      array('RedirectHeader', 'RedirectCountry')
     );
   }
   
@@ -31,7 +31,7 @@ class LanguageRedirect  {
       $redirector = new $class($this->api);
       $this->redirectPossible = $redirector->checkAndRedirect();
       if (variable_get('geoip_debug', FALSE)) {
-      	watchdog('geoip_language_redirect', 'After !class redirectPossible=!bool', array('!class' => $class, '!bool' => $this->redirectPossible), WATCHDOG_DEBUG);
+        watchdog('geoip_language_redirect', 'After !class redirectPossible=!bool', array('!class' => $class, '!bool' => ($this->redirectPossible ? "Yes" : "No")) , WATCHDOG_DEBUG);
       }
     }
     if (is_null($this->redirectPossible)) {
