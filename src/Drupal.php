@@ -15,7 +15,7 @@ class Drupal {
       $header_var = variable_get('geoip_language_redirect_trusted_header', 'HTTP_X_GEOIP');
       if (isset($_SERVER[$header_var])) {
         $this->header = array();
-        parse_str($_SERVER['HTTP_X_GEOIP'], $vars);
+        parse_str($_SERVER[$header_var], $vars);
       }
       else {
         $this->header = array();
