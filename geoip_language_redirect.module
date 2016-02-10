@@ -1,34 +1,50 @@
 <?php
 
 /**
- * Implements hook_boot().
- * 
- * Checks if we possibly want to redirect to another URL and
- * disables page-cache if so.
+ * Implements hook_menu().
  */
-function geoip_language_redirect_boot() {
-  if (PHP_SAPI != 'cli')
-    _geoip_language_redirect_instance()->hook_boot();
+function geoip_language_redirect_menu() {
+  $items['geoip-language-suggestions'] = [
+    'page callback' => 'geoip_language_redirect_suggestions',
+    'access callback' => TRUE,
+  ];
+  return $items;
 }
 
 /**
- * Implements hook_language_init().
+ * Page callback: Show language suggestions based on the IP.
  */
-function geoip_language_redirect_language_init() {
-  if (PHP_SAPI != 'cli')
-    _geoip_language_redirect_instance()->hook_language_init();
-}
-
-/**
- * Create or get a request-wide instance of LanguageRedirect.
- *
- * @return \Drupal\geoip_language_redirect\LanguageRedirect
- */
-function _geoip_language_redirect_instance() {
-  static $instance = NULL;
-  if (!$instance) {
-    $instance = \Drupal\geoip_language_redirect\LanguageRedirect::fromDefaults();
+function geoip_language_redirect_suggestions() {
+  $drupal = new \Drupal\geoip_language_redirect\Drupal();
+  $header = $drupal->redirectHeader();
+  if (isset($header['redirect']) && $header['redirect'] != 'no') {
+    return [];
   }
-  return $instance;
+  if (!isset($header['country']) || !($country = $header['country'])) {
+    $country = $drupal->getCountry();
+  }
+  $mapping = $drupal->getMapping();
+  $suggestions = [];
+  if (isset($mapping[$country])) {
+    $suggestions[] = $mapping[$country];
+  }
+  $suggestions[] = $drupal->defaultLanguage();
+
+  drupal_json_output($suggestions);
+  exit;
 }
 
+/**
+ * Implements hook_preprocess_html().
+ */
+function geoip_language_redirect_preprocess_html(&$vars) {
+  $drupal = new \Drupal\geoip_language_redirect\Drupal();
+  $links = $drupal->translationLinks($drupal->currentPath());
+  foreach ($links as $lang => $url) {
+    drupal_add_html_head_link([
+      'rel' => 'alternate',
+      'hreflang' => $lang,
+      'href' => $url,
+    ]);
+  }
+}

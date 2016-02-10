@@ -27,24 +27,24 @@ class Drupal {
   public function currentPath() {
     return $_GET['q'];
   }
+
   public function currentParameters() {
     return drupal_get_query_parameters();
   }
-  public function currentLanguage() {
-    return $GLOBALS['language']->language;
-  }
+
   public function defaultLanguage() {
     return \variable_get(
       'geoip_language_redirect_default_language',
       \language_default()->language
     );
   }
-  public function redirect($path, $language, $options = array()) {
+
+  public function url($path, $language, $options = array()) {
     $options = array('language' => $language) + $options;
     if (!isset($options['query'])) {
       $options['query'] = $this->currentParameters();
     }
-    \drupal_goto($path, $options);
+    return url($path, $options);
   }
   public function switchLinks($path) {
     $links = \language_negotiation_get_switch_links('language', $path);
@@ -74,32 +74,21 @@ class Drupal {
   }
 
   /**
-   * Disable Drupal's page-cache during hook_boot().
+   * Get list of accessible translation links.
    */
-  public function disableCache() {
-    if ($this->originalCache = \variable_get('cache')) {
-      $GLOBALS['conf']['skip_cache'] = TRUE;
-    }
-  }
-  
-  /**
-   * Serve the page from cache and end execution.
-   */
-  public function serveFromCache() {
-    if ($this->originalCache) {
-      $cache = \drupal_page_get_cache();
-      if (\is_object($cache)) {
-        \header('X-Drupal-Cache: HIT');
-        \drupal_serve_page_from_cache($cache);
-        if (\variable_get('page_cache_invoke_hooks', TRUE)) {
-          \bootstrap_invoke_all('exit');
+  public function translationLinks($path) {
+    $accessible_links = [];
+    if ($links = $this->switchLinks($path)) {
+      foreach ($links as $lang => $link) {
+        if ($this->checkAccess($link['href'], $lang)) {
+          $url = $this->url($link['href'], $link['language']);
+          $accessible_links[$lang] = $url ? $url : '/';
         }
-        // We are done.
-        exit;
       }
     }
+    return $accessible_links;
   }
-  
+
   /**
    * Get current users country from GeoIP.
    */

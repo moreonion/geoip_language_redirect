@@ -4,3 +4,5 @@ core = 7.x
 project = geoip_language_redirect
 
 dependencies[] = psr0
+
+scripts[] = geoip_language_redirect.js
