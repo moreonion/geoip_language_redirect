@@ -37,31 +37,32 @@ mayBeBot = ->
 showOverlay = ->
   # hide the body initially to prevent flickering
   overlayStyle = injectStyle('body {visibility: hidden;}')
-
   # show the body in case anything breaks
   window.onerror = ->
     removeEl(overlayStyle)
     hideOverlay()
     return
 
+  $overlay = jQuery('<div id="geoip-language-redirect-overlay"></div>')
+
   # append the overlay and show the body once the DOM is loaded
   jQuery( ->
-    $overlay = jQuery('<div id="geoip-language-redirect-overlay"></div>')
-    .css({
-      'position': 'fixed',
-      'top': 0,
-      'right': 0,
-      'bottom': 0,
-      'left': 0,
-      'z-index': 1000,
-      'background': '#fff'
-      })
-      .appendTo(document.body)
+    if ($overlay)
+      $overlay.css({
+        'position': 'fixed',
+        'top': 0,
+        'right': 0,
+        'bottom': 0,
+        'left': 0,
+        'z-index': 1000,
+        'background': '#fff'
+        })
+        .appendTo(document.body)
+      setTimeout( ->
+        showSpinner()
+        return
+      , 1000)
     removeEl(overlayStyle)
-    setTimeout( ->
-      showSpinner()
-      return
-    , 1000)
     return
   )
   return
@@ -74,6 +75,8 @@ showSpinner = ->
 
 hideOverlay = ->
   $overlay && $overlay.remove()
+  $overlay = null;
+  removeEl(overlayStyle)
   removeEl(spinnerStyle)
   return
 
@@ -90,6 +93,7 @@ injectStyle = (css) ->
 
 removeEl = (el) ->
   el && el.parentNode && el.parentNode.removeChild(el)
+  el = null;
   return
 
 checkAndRedirect = ->
@@ -105,10 +109,13 @@ checkAndRedirect = ->
         return
       if links.hasOwnProperty(lang)
         window.location = links[lang]
+        return
+    hideOverlay()
     return
   ).fail( ->
     hideOverlay()
     return
   )
+  return
 
 checkAndRedirect()

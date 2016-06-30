@@ -68,20 +68,23 @@
       removeEl(overlayStyle);
       hideOverlay();
     };
+    $overlay = jQuery('<div id="geoip-language-redirect-overlay"></div>');
     jQuery(function() {
-      $overlay = jQuery('<div id="geoip-language-redirect-overlay"></div>').css({
-        'position': 'fixed',
-        'top': 0,
-        'right': 0,
-        'bottom': 0,
-        'left': 0,
-        'z-index': 1000,
-        'background': '#fff'
-      }).appendTo(document.body);
+      if ($overlay) {
+        $overlay.css({
+          'position': 'fixed',
+          'top': 0,
+          'right': 0,
+          'bottom': 0,
+          'left': 0,
+          'z-index': 1000,
+          'background': '#fff'
+        }).appendTo(document.body);
+        setTimeout(function() {
+          showSpinner();
+        }, 1000);
+      }
       removeEl(overlayStyle);
-      setTimeout(function() {
-        showSpinner();
-      }, 1000);
     });
   };
 
@@ -94,6 +97,8 @@
 
   hideOverlay = function() {
     $overlay && $overlay.remove();
+    $overlay = null;
+    removeEl(overlayStyle);
     removeEl(spinnerStyle);
   };
 
@@ -113,6 +118,7 @@
 
   removeEl = function(el) {
     el && el.parentNode && el.parentNode.removeChild(el);
+    el = null;
   };
 
   checkAndRedirect = function() {
@@ -123,7 +129,7 @@
     showOverlay();
     links = getLanguageLinks();
     current = document.getElementsByTagName('html')[0].getAttribute('lang');
-    return jQuery.getJSON('/geoip-language-suggestions').done(function(data) {
+    jQuery.getJSON('/geoip-language-suggestions').done(function(data) {
       var i, lang, len;
       for (i = 0, len = data.length; i < len; i++) {
         lang = data[i];
@@ -133,8 +139,10 @@
         }
         if (links.hasOwnProperty(lang)) {
           window.location = links[lang];
+          return;
         }
       }
+      hideOverlay();
     }).fail(function() {
       hideOverlay();
     });
