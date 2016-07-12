@@ -48,12 +48,20 @@ class Drupal {
   }
   public function switchLinks($path) {
     $links = \language_negotiation_get_switch_links('language', $path);
+    $current_language = $GLOBALS['language']->language;
+    unset($links->links[$current_language]);
     if (variable_get('site_frontpage', 'node') == $path) {
       $front_links = \language_negotiation_get_switch_links('language', '');
       foreach ($links->links as $lang => $link) {
         if (empty($link['href'])) {
           $links->links[$lang] = $front_links->links[$lang];
         }
+      }
+    }
+    // Remove remaining non-links.
+    foreach ($links->links as $lang => $link) {
+      if (!isset($link['href'])) {
+        unset($links->links[$lang]);
       }
     }
     return $links ? $links->links : NULL;
