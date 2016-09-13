@@ -48,3 +48,37 @@ function geoip_language_redirect_preprocess_html(&$vars) {
     ]);
   }
 }
+
+/**
+ * Implements hook_theme().
+ */
+function geoip_language_redirect_theme() {
+  $hooks['geoip_language_redirect_loading'] = [
+    'template' => 'geoip-language-redirect-loading',
+    'variables' => [],
+  ];
+  $hooks['geoip_language_redirect_loading_styles'] = [
+    'template' => 'geoip-language-redirect-loading-styles',
+    'variables' => [],
+  ];
+  return $hooks;
+}
+
+/**
+ * Implements hook_init().
+ *
+ * Add our settings and the spinner JS to our output.
+ */
+function geoip_language_redirect_init() {
+  $html = json_encode(theme('geoip_language_redirect_loading'));
+  $css = json_encode(theme('geoip_language_redirect_loading_styles'));
+  $settings = <<<JS
+var geoip_language_redirect = {html:$html,styles:$css};
+JS;
+  drupal_add_js($settings, [
+    'type' => 'inline',
+    'group' => 'library',
+    'every_page' => TRUE,
+    'weight' => -15,
+  ]);
+}
