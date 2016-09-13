@@ -77,8 +77,7 @@
           'right': 0,
           'bottom': 0,
           'left': 0,
-          'z-index': 1000,
-          'background': '#fff'
+          'z-index': 1000
         }).appendTo(document.body);
         setTimeout(function() {
           showSpinner();
