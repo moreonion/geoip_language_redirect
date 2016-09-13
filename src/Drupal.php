@@ -47,7 +47,12 @@ class Drupal {
     return url($path, $options);
   }
   public function switchLinks($path) {
+    require_once DRUPAL_ROOT . '/includes/language.inc';
+
     $links = \language_negotiation_get_switch_links('language', $path);
+    if (!$links) {
+      return NULL;
+    }
     $current_language = $GLOBALS['language']->language;
     unset($links->links[$current_language]);
     if (variable_get('site_frontpage', 'node') == $path) {
