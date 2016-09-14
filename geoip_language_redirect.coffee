@@ -3,6 +3,13 @@ baseUrl = (href) ->
   p = href.indexOf('/', p+2)
   baseurl = href.substr(0, p + 1)
 
+ready = (fn) ->
+  if document.readyState != 'loading'
+    fn()
+  else
+    document.addEventListener('DOMContentLoaded', fn)
+  return
+
 referrerHasSameHost = ->
   if document.referrer
     base = baseUrl(document.referrer)
@@ -31,7 +38,10 @@ mayBeBot = ->
   return true
 
 hideOverlay = ->
-  removeEl(document.getElementById('geoip-language-redirect-overlay'))
+  ready(->
+    removeEl(document.getElementById('geoip-language-redirect-overlay'))
+    return
+  )
   return
 
 removeEl = (el) ->
