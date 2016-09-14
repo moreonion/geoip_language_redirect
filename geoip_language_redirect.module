@@ -45,13 +45,16 @@ function geoip_language_redirect_preprocess_html(&$vars) {
   $document_write = <<<HTML
 <script>
 (function() {
-  var old_error = window.onerror;
-  window.onerror = function() {
-    var el = document.getElementById('geoip-language-redirect-overlay');
-    el && el.parentNode && el.parentNode.removeChild(el);
-    window.onerror = old_error;
-  };
-  document.write($loading_screen);
+  if (!window.geoip_language_redirect_overlay_written) {
+    var old_error = window.onerror;
+    window.onerror = function() {
+      var el = document.getElementById('geoip-language-redirect-overlay');
+      el && el.parentNode && el.parentNode.removeChild(el);
+      window.onerror = old_error;
+    };
+    document.write($loading_screen);
+    window.geoip_language_redirect_overlay_written = true;
+  }
 })();
 </script>
 HTML;
