@@ -54,8 +54,7 @@ showOverlay = ->
         'right': 0,
         'bottom': 0,
         'left': 0,
-        'z-index': 1000,
-        'background': '#fff'
+        'z-index': 1000
         })
         .appendTo(document.body)
       setTimeout( ->
@@ -69,9 +68,14 @@ showOverlay = ->
 
 showSpinner = ->
   if ($overlay)
-    $overlay.append('<div class="spinner"><div class="bounce1"></div><div class="bounce2"></div><div class="bounce3"></div></div>')
-    spinnerStyle = injectStyle('.spinner{margin:50vh auto 0;width:100px;text-align:center}.spinner > div{width:18px;height:18px;margin-right:10px;background-color:#333;border-radius:100%;display:inline-block;-webkit-animation:sk-bouncedelay 1.4s infinite ease-in-out both;animation:sk-bouncedelay 1.4s infinite ease-in-out both}.spinner .bounce1{-webkit-animation-delay:-.32s;animation-delay:-.32s}.spinner .bounce2{-webkit-animation-delay:-.16s;animation-delay:-.16s}@-webkit-keyframes sk-bouncedelay{0%,80%,100%{-webkit-transform:scale(0)}40%{-webkit-transform:scale(1.0)}}@keyframes sk-bouncedelay{0%,80%,100%{-webkit-transform:scale(0);transform:scale(0)}40%{-webkit-transform:scale(1.0);transform:scale(1.0)}}')
-  return
+    if (!(window.hasOwnProperty('geoip_language_redirect') && window.geoip_language_redirect.hasOwnProperty('html') && window.geoip_language_redirect.hasOwnProperty('styles')))
+      window.geoip_language_redirect = {
+        html: '<div class="spinner"><div class="bounce1"></div><div class="bounce2"></div><div class="bounce3"></div></div>',
+        styles: '.spinner{margin:50vh auto 0;width:100px;text-align:center}.spinner > div{width:18px;height:18px;margin-right:10px;background-color:#333;border-radius:100%;display:inline-block;-webkit-animation:sk-bouncedelay 1.4s infinite ease-in-out both;animation:sk-bouncedelay 1.4s infinite ease-in-out both}.spinner .bounce1{-webkit-animation-delay:-.32s;animation-delay:-.32s}.spinner .bounce2{-webkit-animation-delay:-.16s;animation-delay:-.16s}@-webkit-keyframes sk-bouncedelay{0%,80%,100%{-webkit-transform:scale(0)}40%{-webkit-transform:scale(1.0)}}@keyframes sk-bouncedelay{0%,80%,100%{-webkit-transform:scale(0);transform:scale(0)}40%{-webkit-transform:scale(1.0);transform:scale(1.0)}}#geoip-language-redirect-overlay{background:#fff;}'
+      }
+    $overlay.append(window.geoip_language_redirect.html)
+    spinnerStyle = injectStyle(window.geoip_language_redirect.styles)
+    return
 
 hideOverlay = ->
   $overlay && $overlay.remove()
