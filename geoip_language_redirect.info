@@ -6,3 +6,4 @@ project = geoip_language_redirect
 dependencies[] = psr0
 
 scripts[] = geoip_language_redirect.js
+stylesheets[screen][] = geoip_language_redirect.css

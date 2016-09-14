@@ -36,8 +36,30 @@ function geoip_language_redirect_suggestions() {
 
 /**
  * Implements hook_preprocess_html().
+ *
+ * Add splash screen and link-tags for translation.
  */
 function geoip_language_redirect_preprocess_html(&$vars) {
+  // This is indentionally hardcoded so themes can't break it.
+  $loading_screen = drupal_json_encode(trim(theme('geoip_language_redirect_loading')));
+  $document_write = <<<HTML
+<script>
+(function() {
+  var old_error = window.onerror;
+  window.onerror = function() {
+    var el = document.getElementById('geoip-language-redirect-overlay');
+    el && el.parentNode && el.parentNode.removeChild(el);
+    window.onerror = old_error;
+  };
+  document.write($loading_screen);
+})();
+</script>
+HTML;
+  $vars['page']['page_top']['geoip_language_redirect'] = [
+    '#markup' => trim($document_write),
+    '#weight' => -20,
+  ];
+
   $drupal = new \Drupal\geoip_language_redirect\Drupal();
   $links = $drupal->translationLinks($drupal->currentPath());
   foreach ($links as $lang => $url) {
@@ -57,28 +79,5 @@ function geoip_language_redirect_theme() {
     'template' => 'geoip-language-redirect-loading',
     'variables' => [],
   ];
-  $hooks['geoip_language_redirect_loading_styles'] = [
-    'template' => 'geoip-language-redirect-loading-styles',
-    'variables' => [],
-  ];
   return $hooks;
-}
-
-/**
- * Implements hook_init().
- *
- * Add our settings and the spinner JS to our output.
- */
-function geoip_language_redirect_init() {
-  $html = json_encode(theme('geoip_language_redirect_loading'));
-  $css = json_encode(theme('geoip_language_redirect_loading_styles'));
-  $settings = <<<JS
-var geoip_language_redirect = {html:$html,styles:$css};
-JS;
-  drupal_add_js($settings, [
-    'type' => 'inline',
-    'group' => 'library',
-    'every_page' => TRUE,
-    'weight' => -15,
-  ]);
 }
