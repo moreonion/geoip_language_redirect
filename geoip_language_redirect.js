@@ -68,6 +68,7 @@
   checkAndRedirect = function() {
     var current, links;
     if (referrerHasSameHost() || mayBeBot()) {
+      hideOverlay();
       return;
     }
     links = getLanguageLinks();

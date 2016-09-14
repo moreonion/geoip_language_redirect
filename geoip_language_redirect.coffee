@@ -41,6 +41,7 @@ removeEl = (el) ->
 
 checkAndRedirect = ->
   if referrerHasSameHost() or mayBeBot()
+    hideOverlay()
     return
   links = getLanguageLinks()
   current = document.getElementsByTagName('html')[0].getAttribute('lang')
