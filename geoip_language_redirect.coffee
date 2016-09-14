@@ -40,6 +40,8 @@ mayBeBot = ->
 hideOverlay = ->
   ready(->
     removeEl(document.getElementById('geoip-language-redirect-overlay'))
+    if window.geoip_language_redirect_overlay_old_error
+      window.onerror = window.geoip_language_redirect_overlay_old_error
     return
   )
   return

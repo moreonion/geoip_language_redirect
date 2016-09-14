@@ -46,11 +46,11 @@ function geoip_language_redirect_preprocess_html(&$vars) {
 <script>
 (function() {
   if (!window.geoip_language_redirect_overlay_written) {
-    var old_error = window.onerror;
+    window.geoip_language_redirect_overlay_old_error = window.onerror;
     window.onerror = function() {
       var el = document.getElementById('geoip-language-redirect-overlay');
       el && el.parentNode && el.parentNode.removeChild(el);
-      window.onerror = old_error;
+      window.onerror = window.geoip_language_redirect_overlay_old_error;
     };
     document.write($loading_screen);
     window.geoip_language_redirect_overlay_written = true;
