@@ -16,13 +16,7 @@ function geoip_language_redirect_menu() {
  */
 function geoip_language_redirect_suggestions() {
   $drupal = new \Drupal\geoip_language_redirect\Drupal();
-  $header = $drupal->redirectHeader();
-  if (isset($header['redirect']) && $header['redirect'] != 'no') {
-    return [];
-  }
-  if (!isset($header['country']) || !($country = $header['country'])) {
-    $country = $drupal->getCountry();
-  }
+  $country = $drupal->getCountry();
   $mapping = $drupal->getMapping();
   $suggestions = [];
   if (isset($mapping[$country])) {
