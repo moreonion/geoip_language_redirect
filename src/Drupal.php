@@ -10,20 +10,6 @@ class Drupal {
   protected $originalCache = NULL;
   protected $header = NULL;
 
-  public function redirectHeader() {
-    if (!isset($this->header)) {
-      $header_var = variable_get('geoip_language_redirect_trusted_header', 'HTTP_X_GEOIP');
-      if (isset($_SERVER[$header_var])) {
-        $this->header = array();
-        parse_str($_SERVER[$header_var], $this->header);
-      }
-      else {
-        $this->header = array();
-      }
-    }
-    return $this->header;
-  }
-
   public function currentPath() {
     return $_GET['q'];
   }
