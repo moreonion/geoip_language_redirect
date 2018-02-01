@@ -22,21 +22,6 @@ getLanguageLinks = ->
     links[e.getAttribute('hreflang')] = e.getAttribute('href')
   return links
 
-mayBeBot = ->
-  agent = navigator.userAgent
-  if not agent
-    return true
-  if agent.indexOf('Mozilla') != -1
-    iagent = agent.toLowerCase()
-    for search in ['bot', 'crawler', 'spider']
-      if iagent.indexOf(search) != -1
-        return true
-    return false
-  for engine in ['Webkit', 'Safari', 'Opera', 'Dillo', 'Lynx', 'Links', 'w3m', 'Midori', 'iCab']
-    if agent.indexOf(engine) != -1
-      return false
-  return true
-
 hideOverlay = ->
   ready(->
     removeEl(document.getElementById('geoip-language-redirect-overlay'))
@@ -48,11 +33,11 @@ hideOverlay = ->
 
 removeEl = (el) ->
   el && el.parentNode && el.parentNode.removeChild(el)
-  el = null;
+  el = null
   return
 
 checkAndRedirect = ->
-  if referrerHasSameHost() or mayBeBot()
+  if referrerHasSameHost()
     hideOverlay()
     return
   links = getLanguageLinks()
