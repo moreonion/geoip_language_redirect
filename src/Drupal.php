@@ -90,21 +90,33 @@ class Drupal {
 
   /**
    * Get current users country from GeoIP.
+   *
+   * If geoip debugging is enabled (=the variable geoip_debug has a non-empty
+   * value) the outcome of the country detection can be overridden using $_GET
+   * variables:
+   * - $_GET['geoip_country'] overrides the detected country.
+   * - $_GET['geoip'] simulates a request from a specific IP address.
+   *
+   * @return null|string
+   *   A two character country code or NULL, if geoip detection failed.
    */
   public function getCountry() {
+    $ip_address = ip_address();
     if (variable_get('geoip_debug', FALSE)) {
       if (isset($_GET['geoip_country'])) {
         return $_GET['geoip_country'];
       }
       if (isset($_GET['geoip'])) {
-        return $_GET['geoip'];
+        $ip_address = $_GET['geoip'];
       }
     }
+
     // use @: see https://bugs.php.net/bug.php?id=59753
     if (function_exists('geoip_country_code_by_name')) {
-      return @geoip_country_code_by_name(ip_address());
+      return @geoip_country_code_by_name($ip_address);
     } else {
       watchdog('geoip_language_redirect', 'geoip_country_code_by_name() does not exist. Check your installation.', array(), WATCHDOG_WARNING);
+      return NULL;
     }
   }
   
